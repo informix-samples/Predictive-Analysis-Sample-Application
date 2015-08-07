@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Time Series Sample Application</title>
+<style>
+h1 {
+	text-align: center;
+}
+
+form {
+	display: inline;
+}
+
+#buttons {
+	margin-top: 15px;
+}
+
+#raiseTempInput {
+	background: red;
+	width: 33%;
+	height: 50px;
+	font-weight: bold;
+	color: #ffffff;
+}
+
+#holdTempInput {
+	background: purple;
+	width: 33%;
+	height: 50px;
+	font-weight: bold;
+	color: #ffffff;
+}
+
+#lowerTempInput {
+	background: blue;
+	width: 32.9%;
+	height: 50px;
+	font-weight: bold;
+	color: #ffffff;
+}
+
+#graph {
+	height: 200px;
+	width: 520px;
+	background: #C0C0C0;
+	margin-bottom: 15px;
+}
+
+#statusContainer {
+	background: #00FF00;
+	height: 50px;
+	width: 98.9%;
+	margin-top: 15px;
+	border-style: ridge;
+}
+
+#statusLabel {
+	text-align: center;	
+}
+</style>
+
+<script src="JS/vis.js"></script>
+<link href="JS/vis.css" rel="stylesheet" type="text/css" />
+<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+	<h1>Time Series Sample Application</h1>
+	<div id="visualization"></div>
+	<div id="buttons">
+		<form id="raiseTemp">
+			<input type="button" id="raiseTempInput" type="submit" value="Raise Temperature" />
+		</form>
+		<form id="holdTemp">
+			<input type="button" id="holdTempInput" type="submit" value="Hold Temperature" />
+		</form>
+		<form id="lowerTemp">
+			<input type="button" id="lowerTempInput" type="submit" value="Lower Temperature" />
+		</form>
+		<div id="statusContainer">
+			<h2 id="statusLabel">Current Safety Status</h2>
+		</div>
+	</div>
+
+	<script> 
+		jQuery(function($) {
+			var socket = io.connect();
+			var raiseTemp = $('#raiseTemp');
+			var holdTemp = $('#holdTemp');
+			var lowerTemp = $('#lowerTemp');
+			
+			raiseTemp.click(function(e){
+				e.preventDefault();
+				socket.emit('raiseTemp', function(data){
+				});
+			});
+			
+			holdTemp.click(function(e){
+				e.preventDefault();
+				socket.emit('holdTemp', function(data){
+				});
+			});
+			
+			lowerTemp.click(function(e){
+				e.preventDefault();
+				socket.emit('lowerTemp', function(data){
+				});
+			});
+			
+			socket.on('newData', function(){
+				socket.emit('getData');
+			});
+			
+			socket.on('updateData', function(input){
+				  var degree = input.latestTemp[0].celsius;
+				  var timestamp = input.latestTemp[0].tstamp_gmt;
+				  addDataPoint(degree, timestamp);
+			  });
+			  
+			socket.on('safe', function(){
+				console.log("SAFE");
+				$("#statusContainer").css("background","#00FF00");
+			  });
+			  
+			socket.on('warning', function(){
+				console.log("WARNING");
+				$("#statusContainer").css("background","#FFFF00");
+			  });
+			  
+			socket.on('danger', function(){
+				console.log("DANGER");
+				$("#statusContainer").css("background","#FF0000");
+			  });
+			  
+			socket.on('need-more-data', function(){
+				  //modify some html features here
+			  });
+			
+		});
+		
+  var strategy = document.getElementById('strategy');
+  var container = document.getElementById('visualization');
+  var dataset = new vis.DataSet();
+  var socket = io();
+  
+  var options = {
+    start: vis.moment().add(-5, 'hours'),
+    end: vis.moment().add(-5, 'hours').add(30, 'seconds'),
+    dataAxis: {
+      left: {
+        range: {
+          min:-10, max: 15
+        }
+      }
+    },
+    drawPoints: {
+      style: 'circle' // square, circle
+    },
+    shaded: {
+      orientation: 'bottom' // top, bottom
+    }
+  };
+  var graph2d = new vis.Graph2d(container, dataset, options);
+  
+  function renderStep() {
+    var now = vis.moment();
+    var range = graph2d.getWindow();
+    var interval = range.end - range.start;
+        // move the window 90% to the left when now is larger than the end of the window
+        if (now > range.end) {
+          graph2d.setWindow(now - 0.1 * interval, now + 0.9 * interval);
+        }
+    }
+
+  function addDataPoint(degree, timestamp) {
+    var timestampArray = timestamp.split(/[\s-:.]+/)
+ 	var timestampInMillis = new Date(timestampArray[0],timestampArray[1]-1,timestampArray[2],timestampArray[3],timestampArray[4],timestampArray[5],timestampArray[6]);
+ 	var millis = timestampInMillis.getTime() - (timestampInMillis.getTimezoneOffset()*60000);
+    dataset.add({
+      x: millis,
+      y: degree
+    });
+
+    // remove all data points which are no longer visible
+    var range = graph2d.getWindow();
+    var interval = range.end - range.start;
+    var oldIds = dataset.getIds({
+      filter: function (item) {
+        return item.x < range.start - interval;
+      }
+    });
+    dataset.remove(oldIds);
+    renderStep();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+*~
+*.swo
+*.swp
+*.metadata
+.settings/
+node_modules/
+.project
