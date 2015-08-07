@@ -41,13 +41,19 @@ Step 1 : Install Node.js
 Step 2 : Clone this project
 
 ```
-  git clone <url>
+  git clone https://github.com/ibm-informix/Predictive-Analysis-Sample-Application.git
 ``` 
 
-Step 3 : Install external dependencies and run application
+Step 3 : Install external dependencies
 
 ```
-  npm start
+  npm install
+```
+
+Step 4 : Run application
+
+```
+  node server.js
 ```
 
 ###Option 2: Bluemix
@@ -55,7 +61,7 @@ Step 3 : Install external dependencies and run application
 Step 1 : Clone this project
 
 ```
-  git clone <url>
+  git clone https://github.com/ibm-informix/Predictive-Analysis-Sample-Application.git
 ``` 
 
 Step 2 : Set api and login to Bluemix
@@ -68,20 +74,20 @@ Step 2 : Set api and login to Bluemix
 Step 3 : Push the application to Bluemix
 
 ```
-  cf push <nameOfApp>
+  cf push <nameofapp>
 ```
 
 Step 4 : Create and bind Time Series Service to application
 
 ```
   cf create-service timeseriesdatabase small timeseries
-  cf bind-service <nameOfApp> timeseries
+  cf bind-service <nameofapp> timeseries
 ```
 
 Step 5 : Restage application
 
 ```
-  cf restage <nameOfApp>
+  cf restage <nameofapp>
 ```
 
-Step 6 : View the application at nameOfApp.mybluemix.net
+Step 6 : View the application at nameofapp.mybluemix.net
